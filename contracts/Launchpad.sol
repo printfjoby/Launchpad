@@ -8,7 +8,7 @@ contract Launchpad {
     enum Status {
         Active,
         Successful,
-        Expired
+        Failed
     }
 
 
@@ -32,7 +32,7 @@ contract Launchpad {
     Project[] public projects;
 
     // mapping from Project index to contributor address to contribution amount
-    mapping(uint256 => mapping(address => uint256)) contributions;
+    mapping(uint256 => mapping(address => uint256)) public contributions;
 
 
     /* Events */
@@ -69,10 +69,7 @@ contract Launchpad {
         project.raisedAmount += msg.value;
         project.contributorsCount += 1;
         contributions[_projectIndex][msg.sender] += msg.value;
-
-        if (project.raisedAmount >= project.goalAmount) {
-            project.projectStatus = Status.Successful;
-        }
+        computeStatus(_projectIndex);
     }
 
 
@@ -80,15 +77,36 @@ contract Launchpad {
         require(_projectIndex < projects.length, "Invalid project index");
         Project storage project = projects[_projectIndex];
         require(project.creator == msg.sender, "Only the project creator can withdraw funds");
-        require(project.projectStatus != Status.Active, "Project is Active");
         require(block.timestamp > project.deadline, "Project is not Expired");
-
+        computeStatus(_projectIndex);
+        require(project.projectStatus == Status.Successful, "Project status is Successful");
         uint256 amount = project.raisedAmount;
         project.raisedAmount = 0;
         project.creator.transfer(amount);
     }
     
 
+    function claimRefund(uint256 _projectIndex) public returns(bool) {
+        Project storage project = projects[_projectIndex];
+        if(project.projectStatus == Status.Active)
+            computeStatus(_projectIndex);
+        require(project.projectStatus == Status.Failed, 'The project is not Failed');
+        uint256 contributionAmount = contributions[_projectIndex][msg.sender];
+        require(contributionAmount > 0,'You have not contributed to this project !');
+        address payable contributor = payable(msg.sender);
+        contributor.transfer(contributionAmount);
+        contributions[_projectIndex][msg.sender] = 0;
+        return true;
+    }
+
+    function computeStatus(uint256 _projectIndex) internal {
+        Project storage project = projects[_projectIndex];
+        if(project.raisedAmount >= project.goalAmount){
+            project.projectStatus = Status.Successful;
+        } else if(block.timestamp > project.deadline && project.raisedAmount < project.goalAmount) {
+            project.projectStatus = Status.Failed;
+        }
+    }
 
     function getProjectDetails(uint256 _projectIndex) external view returns (
         address payable creator,

@@ -5,12 +5,9 @@ const { loadFixture, time } = require("@nomicfoundation/hardhat-network-helpers"
 describe("Launchpad", function () {
   let launchpad;
   let creator;
-  let contributor1;
-  let contributor2;
 
   beforeEach(async function () {
-    [creator, contributor1, contributor2] = await ethers.getSigners();
-
+    [creator] = await ethers.getSigners();
     launchpad = await ethers.deployContract("Launchpad");
     await launchpad.waitForDeployment();
 
@@ -25,7 +22,8 @@ describe("Launchpad", function () {
 
     await launchpad.createProject(title, description, goalAmount, deadline);
 
-    const projectDetails = await launchpad.getProjectDetails(0);
+    const projectIndex = 0;
+    const projectDetails = await launchpad.getProjectDetails(projectIndex);
     expect(projectDetails.creator).to.equal(creator.address);
     expect(projectDetails.title).to.equal(title);
     expect(projectDetails.description).to.equal(description);
@@ -35,3 +33,4 @@ describe("Launchpad", function () {
   });
 
 });
+
