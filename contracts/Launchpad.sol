@@ -45,14 +45,14 @@ contract Launchpad {
         string memory _title, 
         string memory _description, 
         uint256 _goalAmount,    
-        uint256 _deadline 
+        uint256 _duration 
     ) external {
         Project memory newProject = Project({
             creator: payable(msg.sender),
             title: _title,
             description: _description,
             goalAmount: _goalAmount,
-            deadline : _deadline,
+            deadline : block.timestamp + _duration,
             closedDate: 0,
             raisedAmount: 0,
             contributorsCount: 0,
@@ -76,10 +76,10 @@ contract Launchpad {
     function withdrawFunds(uint256 _projectIndex) external {
         require(_projectIndex < projects.length, "Invalid project index");
         Project storage project = projects[_projectIndex];
-        require(project.creator == msg.sender, "Only the project creator can withdraw funds");
-        require(block.timestamp > project.deadline, "Project is not Expired");
+        require(project.creator == msg.sender, "Only the project creator can withdraw fund");
+        require(block.timestamp < project.deadline, "Project is still Active");
         computeStatus(_projectIndex);
-        require(project.projectStatus == Status.Successful, "Project status is Successful");
+        require(project.projectStatus == Status.Successful, "Project status is not Successful");
         uint256 amount = project.raisedAmount;
         project.raisedAmount = 0;
         project.creator.transfer(amount);
