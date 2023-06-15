@@ -42,6 +42,14 @@ describe("Launchpad", function () {
         expect(projectDetails.projectStatus).to.equal(0);
       });
 
+      it("should fail when invalid project index given to get project details", async function () {
+        const projectIndex = 1;
+        await expect( 
+          launchpad.connect(creator).getProjectDetails(projectIndex)
+        ).to.be.revertedWith("Invalid project index");
+        
+      });
+
       it("should fail when invalid project index given to withdraw raised fund", async function () {
         const projectIndex = 1;
         await expect( 
