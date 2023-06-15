@@ -77,7 +77,7 @@ contract Launchpad {
         require(_projectIndex < projects.length, "Invalid project index");
         Project storage project = projects[_projectIndex];
         require(project.creator == msg.sender, "Only the project creator can withdraw fund");
-        require(block.timestamp < project.deadline, "Project is still Active");
+        require(block.timestamp > project.deadline, "Project is still Active");
         computeStatus(_projectIndex);
         require(project.projectStatus == Status.Successful, "Project status is not Successful");
         uint256 amount = project.raisedAmount;
