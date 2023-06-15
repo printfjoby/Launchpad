@@ -20,7 +20,6 @@ contract Launchpad {
         string description;
         uint256 goalAmount; 
         uint256 deadline;
-        uint256 closedDate;
         uint256 raisedAmount; 
         uint256 contributorsCount;
         Status projectStatus;
