@@ -87,6 +87,7 @@ contract Launchpad {
     
 
     function claimRefund(uint256 _projectIndex) public returns(bool) {
+        require(_projectIndex < projects.length, "Invalid project index");
         Project storage project = projects[_projectIndex];
         if(project.projectStatus == Status.Active)
             computeStatus(_projectIndex);

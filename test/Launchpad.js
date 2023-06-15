@@ -165,10 +165,81 @@ describe("Launchpad", function () {
         launchpad.connect(contributor1).contribute(projectIndex, {value:additionalAmount})
       ).to.be.revertedWith("Project is Expired");;
   
+      const projectDetails = await launchpad.getProjectDetails(projectIndex);
+      expect(projectDetails.raisedAmount).to.equal(contributionAmount);
+      const contribution = await launchpad.contributions(projectIndex, contributor1.address);
+      expect(contribution).to.equal(contributionAmount);
+      
+    });
+
+    it("should be able to claim refund if the project is failed", async function () {
+      const projectIndex = 0;
+      const contributionAmount = ethers.parseEther("9");
+  
+      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+  
+      await hre.network.provider.send("evm_increaseTime", [Duration_In_Sec]);
+
+      await launchpad.connect(contributor1).claimRefund(projectIndex);
   
       const projectDetails = await launchpad.getProjectDetails(projectIndex);
-      expect(projectDetails.creator).to.equal(creator.address);
-      expect(projectDetails.raisedAmount).to.equal(contributionAmount);
+      expect(projectDetails.projectStatus).to.equal(2);
+      const contribution = await launchpad.contributions(projectIndex, contributor1.address);
+      expect(contribution).to.equal(0);
+      
+    });
+
+    it("should not be able to claim refund if the project index is invalid ", async function () {
+      const projectIndex = 0;
+      const newProjectIndex = 1;
+      const contributionAmount = ethers.parseEther("9");
+  
+      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+  
+      await hre.network.provider.send("evm_increaseTime", [Duration_In_Sec]);
+
+      await expect( 
+        launchpad.connect(contributor1).claimRefund(newProjectIndex)
+      ).to.be.revertedWith("Invalid project index");
+  
+      const projectDetails = await launchpad.getProjectDetails(projectIndex);
+      expect(projectDetails.projectStatus).to.equal(0);
+      const contribution = await launchpad.contributions(projectIndex, contributor1.address);
+      expect(contribution).to.equal(contributionAmount);
+      
+    });
+
+    it("should not be able to claim refund if the project is Active ", async function () {
+      const projectIndex = 0;
+      const contributionAmount = ethers.parseEther("9");
+  
+      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+
+      await expect( 
+        launchpad.connect(contributor1).claimRefund(projectIndex)
+      ).to.be.revertedWith("The project is not Failed");
+  
+      const projectDetails = await launchpad.getProjectDetails(projectIndex);
+      expect(projectDetails.projectStatus).to.equal(0);
+      const contribution = await launchpad.contributions(projectIndex, contributor1.address);
+      expect(contribution).to.equal(contributionAmount);
+      
+    });
+
+    it("should not be able to claim refund if the project is Successful ", async function () {
+      const projectIndex = 0;
+      const contributionAmount = ethers.parseEther("10");
+  
+      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+
+      await hre.network.provider.send("evm_increaseTime", [Duration_In_Sec]);
+
+      await expect( 
+        launchpad.connect(contributor1).claimRefund(projectIndex)
+      ).to.be.revertedWith("The project is not Failed");
+  
+      const projectDetails = await launchpad.getProjectDetails(projectIndex);
+      expect(projectDetails.projectStatus).to.equal(1);
       const contribution = await launchpad.contributions(projectIndex, contributor1.address);
       expect(contribution).to.equal(contributionAmount);
       
