@@ -244,6 +244,25 @@ describe("Launchpad", function () {
       expect(contribution).to.equal(contributionAmount);
       
     });
+
+    it("should not be able to claim refund if not contributed to the project ", async function () {
+      const projectIndex = 0;
+      const contributionAmount = ethers.parseEther("9");
+  
+      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+
+      await hre.network.provider.send("evm_increaseTime", [Duration_In_Sec]);
+
+      await expect( 
+        launchpad.connect(contributor2).claimRefund(projectIndex)
+      ).to.be.revertedWith("You have not contributed to this project !");
+  
+      const projectDetails = await launchpad.getProjectDetails(projectIndex);
+      expect(projectDetails.projectStatus).to.equal(0);
+      const contribution = await launchpad.contributions(projectIndex, contributor1.address);
+      expect(contribution).to.equal(contributionAmount);
+      
+    });
   
   });
 

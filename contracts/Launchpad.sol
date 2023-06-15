@@ -53,7 +53,6 @@ contract Launchpad {
             description: _description,
             goalAmount: _goalAmount,
             deadline : block.timestamp + _duration,
-            closedDate: 0,
             raisedAmount: 0,
             contributorsCount: 0,
             projectStatus: Status.Active
@@ -115,7 +114,6 @@ contract Launchpad {
         string memory description,
         uint256 goalAmount,
         uint256 deadline,
-        uint256 closedDate,
         uint256 raisedAmount,
         uint256 contributorsCount,
         Status projectStatus
@@ -129,7 +127,6 @@ contract Launchpad {
             project.description,
             project.goalAmount,
             project.deadline,
-            project.closedDate,
             project.raisedAmount,
             project.contributorsCount,
             project.projectStatus
