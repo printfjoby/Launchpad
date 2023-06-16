@@ -37,6 +37,13 @@ contract Launchpad {
     /* Events */
     event ProjectCreated(uint256 indexed _projectIndex, string _title, address indexed _creator);
 
+    event Contributed(uint256 indexed _projectIndex, address indexed _contributor, uint256 _amount);
+
+    event Withdrawed(uint256 indexed _projectIndex, address indexed _creator, uint256 _amount);
+
+    event Refunded(uint256 indexed _projectIndex, address indexed _contributor, uint256 _amount);
+
+
 
     /* Functions */
 
@@ -57,7 +64,9 @@ contract Launchpad {
             projectStatus: Status.Active
         });
         projects.push(newProject);
-    }
+        uint256 projectIndex = projects.length - 1;
+        emit ProjectCreated(projectIndex, _title, msg.sender);
+    }   
 
     function contribute(uint256 _projectIndex) external payable {
         require(_projectIndex < projects.length, "Invalid project index");
@@ -68,6 +77,7 @@ contract Launchpad {
         project.contributorsCount += 1;
         contributions[_projectIndex][msg.sender] += msg.value;
         computeStatus(_projectIndex);
+        emit Contributed(_projectIndex, msg.sender, msg.value);
     }
 
 
@@ -81,6 +91,7 @@ contract Launchpad {
         uint256 amount = project.raisedAmount;
         project.raisedAmount = 0;
         project.creator.transfer(amount);
+        emit Withdrawed(_projectIndex, msg.sender, amount);
     }
     
 
