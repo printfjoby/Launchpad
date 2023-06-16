@@ -195,7 +195,9 @@ describe("Launchpad", function () {
   
       await hre.network.provider.send("evm_increaseTime", [Duration_In_Sec]);
 
-      await launchpad.connect(contributor1).claimRefund(projectIndex);
+      await expect(launchpad.connect(contributor1).claimRefund(projectIndex))
+      .to.emit(launchpad, "Refunded")
+      .withArgs(projectIndex, contributor1.address, contributionAmount);
   
       const projectDetails = await launchpad.getProjectDetails(projectIndex);
       expect(projectDetails.projectStatus).to.equal(2);
