@@ -103,10 +103,9 @@ contract Launchpad {
         require(project.projectStatus == Status.Failed, 'The project is not Failed');
         uint256 contributionAmount = contributions[_projectIndex][msg.sender];
         require(contributionAmount > 0,'You have not contributed to this project !');
-        address payable contributor = payable(msg.sender);
-        contributor.transfer(contributionAmount);
         contributions[_projectIndex][msg.sender] = 0;
-        emit Refunded(_projectIndex, contributor, contributionAmount);
+        payable(msg.sender).transfer(contributionAmount);
+        emit Refunded(_projectIndex, msg.sender, contributionAmount);
         return true;
     }
 
