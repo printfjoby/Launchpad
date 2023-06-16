@@ -106,6 +106,7 @@ contract Launchpad {
         address payable contributor = payable(msg.sender);
         contributor.transfer(contributionAmount);
         contributions[_projectIndex][msg.sender] = 0;
+        emit Refunded(_projectIndex, contributor, contributionAmount);
         return true;
     }
 
