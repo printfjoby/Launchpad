@@ -84,7 +84,11 @@ describe("Launchpad", function () {
      
         await hre.network.provider.send("evm_increaseTime", [New_Duration_In_Sec]);
 
-        await launchpad.connect(creator).withdrawFunds(projectIndex);
+        //await launchpad.connect(creator).withdrawFunds(projectIndex);
+        await expect(launchpad.connect(creator).withdrawFunds(projectIndex))
+        .to.emit(launchpad, "Withdrawed")
+        .withArgs(projectIndex, creator.address, contributionAmount);/*contribution amount and
+         raised amount are same in this case*/
 
         const projectDetails = await launchpad.getProjectDetails(projectIndex);
         expect(projectDetails.raisedAmount).to.equal(0);
@@ -120,7 +124,10 @@ describe("Launchpad", function () {
     it("should contibute to a project", async function () {
       const projectIndex = 0;
       const contributionAmount = ethers.parseEther("5");
-      await launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount});
+    
+      await expect(launchpad.connect(contributor1).contribute(projectIndex, {value:contributionAmount}))
+        .to.emit(launchpad, "Contributed")
+        .withArgs(projectIndex, contributor1.address, contributionAmount);
   
       const projectDetails = await launchpad.getProjectDetails(projectIndex);
       expect(projectDetails.raisedAmount).to.equal(contributionAmount);
