@@ -147,7 +147,8 @@ contract Launchpad {
         require(project.projectStatus == Status.Active, "Project is not Active");
         require(block.timestamp < project.deadline, "Project is Expired");
         project.raisedAmount += msg.value;
-        project.contributorsCount += 1;
+        if(contributions[_projectIndex][msg.sender] == 0)
+            project.contributorsCount += 1;
         contributions[_projectIndex][msg.sender] += msg.value;
         computeStatus(_projectIndex);
         emit Contributed(_projectIndex, msg.sender, msg.value);
