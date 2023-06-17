@@ -191,19 +191,6 @@ contract Launchpad {
     }
 
     /**
-     * @dev Computes the status of a project based on its raised amount and deadline.
-     * @param _projectIndex The index of the project in the `projects` array.
-    */
-    function computeStatus(uint256 _projectIndex) internal {
-        Project storage project = projects[_projectIndex];
-        if(project.raisedAmount >= project.goalAmount){
-            project.projectStatus = Status.Successful;
-        } else if(block.timestamp > project.deadline && project.raisedAmount < project.goalAmount) {
-            project.projectStatus = Status.Failed;
-        }
-    }
-
-    /**
      * @dev Retrieves the details of a project.
      * @param _projectIndex The index of the project to fetch details for.
      * @return creator The address of the project creator.
@@ -238,5 +225,18 @@ contract Launchpad {
             project.contributorsCount,
             project.projectStatus
         );
+    }
+
+    /**
+     * @dev Computes the status of a project based on its raised amount and deadline.
+     * @param _projectIndex The index of the project in the `projects` array.
+    */
+    function computeStatus(uint256 _projectIndex) internal {
+        Project storage project = projects[_projectIndex];
+        if(project.raisedAmount >= project.goalAmount){
+            project.projectStatus = Status.Successful;
+        } else if(block.timestamp > project.deadline && project.raisedAmount < project.goalAmount) {
+            project.projectStatus = Status.Failed;
+        }
     }
 }
