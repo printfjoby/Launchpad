@@ -3,7 +3,7 @@ async function main() {
   
     console.log("Deploying contracts with the account:", deployer.address);
 
-    const Marketplace = await ethers.deployContract("Launchpad");
+    const Launchpad = await ethers.deployContract("Launchpad");
 
     await Launchpad.waitForDeployment();
   
