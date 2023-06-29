@@ -4,7 +4,6 @@ require('dotenv').config();
 const SEPOLIA_API_KEY = process.env.SEPOLIA_API_KEY;
 const OP_GOERLI_API_KEY = process.env.OP_GOERLI_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
-
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 module.exports = {
@@ -20,7 +19,7 @@ module.exports = {
   },
   networks: {
     sepolia: {
-      url: `https://sepolia.infura.io/v3/${SEPOLIA_API_KEY}`,
+      url: `https://eth-sepolia.g.alchemy.com/v2/${SEPOLIA_API_KEY}`,
       accounts: [PRIVATE_KEY]
     },
     optimism_goerli: {
