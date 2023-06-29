@@ -1,9 +1,11 @@
 require("@nomicfoundation/hardhat-toolbox");
 require('dotenv').config();
 
-const INFURA_API_KEY = process.env.INFURA_API_KEY;
+const SEPOLIA_API_KEY = process.env.SEPOLIA_API_KEY;
+const OP_GOERLI_API_KEY = process.env.OP_GOERLI_API_KEY;
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
-const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 module.exports = {
   solidity: "0.8.18",
@@ -18,9 +20,17 @@ module.exports = {
   },
   networks: {
     sepolia: {
-      url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [SEPOLIA_PRIVATE_KEY]
+      url: `https://sepolia.infura.io/v3/${SEPOLIA_API_KEY}`,
+      accounts: [PRIVATE_KEY]
+    },
+    optimism_goerli: {
+      url: `https://opt-goerli.g.alchemy.com/v2/${OP_GOERLI_API_KEY}`,
+      accounts: [PRIVATE_KEY],
+      gasPrice: 1500000000
     }
+  },
+  etherscan: {
+    apiKey: ETHERSCAN_API_KEY 
   }
 };
 
