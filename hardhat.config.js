@@ -4,6 +4,7 @@ require('dotenv').config();
 const SEPOLIA_API_KEY = process.env.SEPOLIA_API_KEY;
 const OP_GOERLI_API_KEY = process.env.OP_GOERLI_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const OP_ETHERSCAN_API_KEY = process.env.OP_ETHERSCAN_API_KEY;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 module.exports = {
@@ -25,11 +26,14 @@ module.exports = {
     optimism_goerli: {
       url: `https://opt-goerli.g.alchemy.com/v2/${OP_GOERLI_API_KEY}`,
       accounts: [PRIVATE_KEY],
-      gasPrice: 1500000000
+      gasPrice: 150000000
     }
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY 
+    apiKey: {
+      sepolia: ETHERSCAN_API_KEY,
+      optimisticGoerli: OP_ETHERSCAN_API_KEY
+    }
   }
 };
 
