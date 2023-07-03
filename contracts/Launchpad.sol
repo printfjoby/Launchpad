@@ -34,7 +34,7 @@ contract Launchpad {
     /**
      * @dev Represents a crowdfunding project.
      * Each project has a creator, title, description, funding goal, deadline, raised amount,
-     * contributors count, and project status.
+     * withdrawnAmount, contributors count, and project status.
     */
 
     struct Project {
@@ -44,14 +44,48 @@ contract Launchpad {
         uint256 goalAmount; 
         uint256 deadline;
         uint256 raisedAmount; 
+        uint256 withdrawnAmount; 
         uint256 contributorsCount;
         Status projectStatus;
+        
     }
 
+    /**
+     * @dev Represents a withdraw request.
+     * Each withdraw request has a projectIndex, creator, description, amount, votes,
+     * voteCount, and isWithdrawn.
+    */
+
+    struct WithdrawRequest {
+        uint256 projectIndex;
+        address payable creator;
+        string description;
+        uint256 amount; 
+        uint256 voteCount; 
+        bool isWithdrawn;
+    }
 
     /**
      * @dev Storage Variables
     */
+
+    /**
+     * @dev Withdraw request count.
+    */
+
+    uint256 public withdrawRequestCount;
+
+    /**
+     * @dev Withdraw request index to WithdrawRequest.
+    */
+
+    mapping (uint256 => WithdrawRequest) public withdrawRequests;
+
+     /**
+     * @dev Pending  withdraw request index.
+    */
+
+    uint256[] public pendingWithdrawRequestIndex;
 
     /**
      * @dev An array of all projects created.
@@ -65,6 +99,13 @@ contract Launchpad {
     */
 
     mapping(uint256 => mapping(address => uint256)) public contributions;
+
+    /**
+     * @dev A mapping that stores votting to withdraw request.
+     * It maps a withdraw request index to a voter address and their corresponding voting status.
+    */
+
+    mapping(uint256 => mapping(address => bool)) public voters;
 
 
     /**
@@ -87,6 +128,8 @@ contract Launchpad {
      * @param _amount The contribution amount.
     */
     event Contributed(uint256 indexed _projectIndex, address indexed _contributor, uint256 _amount);
+
+    event WithdrawRequestCreated(uint256 indexed _withdrawRequestCount, uint256 indexed _projectIndex, address _creator , string _description, uint256 _amount);
 
     /**
      * @dev Emitted when funds are withdrawn from a project.
@@ -129,6 +172,7 @@ contract Launchpad {
             goalAmount: _goalAmount,
             deadline : block.timestamp + _duration,
             raisedAmount: 0,
+            withdrawnAmount:0,
             contributorsCount: 0,
             projectStatus: Status.Active
         });
@@ -156,20 +200,76 @@ contract Launchpad {
 
 
     /**
-     * @dev Withdraws funds from a successful project.
+     * @dev Creates a Withdraw Request.
      * @param _projectIndex The index of the project in the `projects` array.
+     * @param _creator The address of the project creator.
+     * @param _description The description of the withdraw request including the milestones.
+     * @param _amount The amount required.
     */
-    function withdrawFunds(uint256 _projectIndex) external {
+    function createWithdrawRequest(
+        uint256 _projectIndex, 
+        address payable _creator,
+        string memory _description,
+        uint256 _amount
+    ) public {
+
         require(_projectIndex < projects.length, "Invalid project index");
         Project storage project = projects[_projectIndex];
         require(project.creator == msg.sender, "Only the project creator can withdraw fund");
         require(block.timestamp > project.deadline, "Project is still Active");
         computeStatus(_projectIndex);
         require(project.projectStatus == Status.Successful, "Project status is not Successful");
-        uint256 amount = project.raisedAmount;
-        project.raisedAmount = 0;
-        project.creator.transfer(amount);
-        emit Withdrawed(_projectIndex, msg.sender, amount);
+
+        require(project.raisedAmount - project.withdrawnAmount - _amount >= 0,'Insufficiant balance');
+
+
+        WithdrawRequest memory newRequest = WithdrawRequest({
+            projectIndex: _projectIndex,
+            creator: payable(msg.sender),
+            description : _description,
+            amount : _amount,
+            voteCount : 0,
+            isWithdrawn : false
+        });
+
+        withdrawRequests[withdrawRequestCount]= newRequest;
+        withdrawRequestCount++;
+
+        pendingWithdrawRequestIndex.push(withdrawRequestCount);
+
+        emit WithdrawRequestCreated(withdrawRequestCount - 1, _projectIndex, _creator, _description, _amount );
+    }
+
+
+    /**
+     * @dev Withdraws funds from a successful project.
+     * @param _withdrawRequestIndex The index of the withdraw requests.
+    */
+    function withdrawFunds(uint256 _withdrawRequestIndex) external {
+
+        WithdrawRequest storage requestDetails = withdrawRequests[_withdrawRequestIndex];
+        uint256 _projectIndex = requestDetails.projectIndex;
+        require(_projectIndex < projects.length, "Invalid project index");
+        Project storage project = projects[_projectIndex];
+        require(project.creator == msg.sender, "Only the project creator can withdraw fund");
+        require(block.timestamp > project.deadline, "Project is still Active");
+        computeStatus(_projectIndex);
+        require(project.projectStatus == Status.Successful, "Project status is not Successful");
+
+        
+        require(requestDetails.isWithdrawn == false,'Already withdrawn');
+        uint256 _raisedAmount = projects[_projectIndex].raisedAmount;
+        require(requestDetails.voteCount >= _raisedAmount / 2,'At least 50% vote is required');
+        
+        uint256 _withdrawnAmount = projects[_projectIndex].withdrawnAmount;
+
+        require(_raisedAmount - _withdrawnAmount - requestDetails.amount >= 0,'Insufficiant balance');
+
+        
+        requestDetails.isWithdrawn = true;
+        requestDetails.creator.transfer(requestDetails.amount);
+
+        emit Withdrawed(_projectIndex, msg.sender, requestDetails.amount);
     }
     
     /**
@@ -200,6 +300,7 @@ contract Launchpad {
      * @return goalAmount The funding goal amount for the project.
      * @return deadline The deadline for the project.
      * @return raisedAmount The total amount raised for the project.
+     * @return withdrawnAmount The total amount withdrawn.
      * @return contributorsCount The number of contributors to the project.
      * @return projectStatus The status of the project.
     */
@@ -210,6 +311,7 @@ contract Launchpad {
         uint256 goalAmount,
         uint256 deadline,
         uint256 raisedAmount,
+        uint256 withdrawnAmount,
         uint256 contributorsCount,
         Status projectStatus
     ) {
@@ -223,6 +325,7 @@ contract Launchpad {
             project.goalAmount,
             project.deadline,
             project.raisedAmount,
+            project.withdrawnAmount,
             project.contributorsCount,
             project.projectStatus
         );
