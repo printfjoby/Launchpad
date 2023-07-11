@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
 /**
  * @title Launchpad
@@ -83,7 +83,7 @@ contract Launchpad {
     uint256 public withdrawRequestCount;
 
     /**
-     * @dev Withdraw request index to WithdrawRequest.
+     * @dev Withdraw request ID to WithdrawRequest.
     */
 
     mapping (uint256 => WithdrawRequest) public withdrawRequests;
@@ -228,8 +228,7 @@ contract Launchpad {
         computeStatus(_projectIndex);
         require(project.projectStatus == Status.Successful, "Project status is not Successful");
 
-        require(project.raisedAmount - project.withdrawnAmount - _amount >= 0,'Insufficiant balance');
-
+        require(project.raisedAmount >= project.withdrawnAmount + _amount, 'Insufficient balance');
 
         WithdrawRequest memory newRequest = WithdrawRequest({
             projectId: _projectId,
@@ -256,8 +255,7 @@ contract Launchpad {
         uint256 _withdrawRequestId
     ) public {
         require(_withdrawRequestId > 0 && _withdrawRequestId <= withdrawRequestCount, "Invalid withdraw request ID");
-        uint256 _withdrawRequestIndex = _withdrawRequestId - 1;  // as Id starts from 1
-        WithdrawRequest storage requestDetails = withdrawRequests[_withdrawRequestIndex];
+        WithdrawRequest storage requestDetails = withdrawRequests[_withdrawRequestId];
         uint256 _projectId = requestDetails.projectId;
         uint256 contribution = contributions[_projectId][msg.sender];
 
@@ -276,8 +274,7 @@ contract Launchpad {
     */
     function withdrawFunds(uint256 _withdrawRequestId) external {
         require(_withdrawRequestId > 0 && _withdrawRequestId <= withdrawRequestCount, "Invalid withdraw request ID");
-        uint256 _withdrawRequestIndex = _withdrawRequestId - 1;  // as Id starts from 1
-        WithdrawRequest storage requestDetails = withdrawRequests[_withdrawRequestIndex];
+        WithdrawRequest storage requestDetails = withdrawRequests[_withdrawRequestId];
         uint256 _projectIndex = requestDetails.projectId - 1;
         require(_projectIndex < projectCount, "Invalid project index");
 
@@ -291,13 +288,13 @@ contract Launchpad {
         uint256 _raisedAmount = project.raisedAmount;
         require(requestDetails.voteCount >= _raisedAmount / 2,'At least 50% vote is required');
 
-        require(_raisedAmount - project.withdrawnAmount - requestDetails.amount >= 0,'Insufficiant balance');
-        
+        uint256 requestAmount = requestDetails.amount;
+        require(_raisedAmount >= project.withdrawnAmount + requestAmount,'Insufficiant balance');
         requestDetails.isWithdrawn = true;
-        requestDetails.creator.transfer(requestDetails.amount);
+        requestDetails.creator.transfer(requestAmount);
+        project.withdrawnAmount += requestAmount;
 
-
-        emit Withdrawed(requestDetails.projectId, msg.sender, requestDetails.amount);
+        emit Withdrawed(requestDetails.projectId, msg.sender, requestAmount);
     }
 
 
@@ -317,7 +314,7 @@ contract Launchpad {
         require(project.projectStatus == Status.Failed, 'The project is not Failed');
         uint256 contributionAmount = contributions[_projectId][msg.sender];
         require(contributionAmount > 0,'You have not contributed to this project !');
-        contributions[_projectIndex][msg.sender] = 0;
+        contributions[_projectId][msg.sender] = 0;
         payable(msg.sender).transfer(contributionAmount);
         emit Refunded(_projectId, msg.sender, contributionAmount);
         return true;
